@@ -1,0 +1,40 @@
+name: Build Release
+
+on:
+  push:
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          # 8.0.x for Pinta / the addin, 6.0.x for the UtilTool
+          dotnet-version: |
+            8.0.x
+            6.0.x
+
+      - name: Install Mono.Addins.UtilTool
+        run: dotnet tool install --global Mono.Addins.UtilTool
+      - name: Add .NET tools to PATH
+        run: echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Install just
+        run: |
+          sudo apt update
+          sudo apt install -y just
+
+      - name: Build and package addin
+        run: just pack
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: ./ScriptEffects.*.mpack

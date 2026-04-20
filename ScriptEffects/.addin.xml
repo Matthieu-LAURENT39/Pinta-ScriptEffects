@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Addin id="ScriptEffects" version="0.0.1" category="Tools">
+    <Header>
+        <Name>ScriptEffects</Name>
+        <Description>Apply C# scripts as effects.</Description>
+        <Author>Matthieu L</Author>
+        <Url>https://github.com/Matthieu-LAURENT39/ScriptEffects-Addin</Url>
+    </Header>
+    <Dependencies>
+        <!-- Currently building against v3.1.0 -->
+        <Addin id="Pinta" version="3.1" />
+    </Dependencies>
+</Addin>

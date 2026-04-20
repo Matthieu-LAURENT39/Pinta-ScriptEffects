@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- Don't auto-include resource files since we embed translations in the addin manifest -->
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <!-- Make sure all dependencies are copied -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mono.Addins" Version="1.4.2-alpha.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Pinta/Pinta.Core/Pinta.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Pinta/Pinta.Effects/Pinta.Effects.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="./.addin.xml" />
+  </ItemGroup>
+
+</Project>
