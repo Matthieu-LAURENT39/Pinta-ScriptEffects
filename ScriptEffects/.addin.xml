@@ -10,4 +10,7 @@
         <!-- Currently building against v3.1.0 -->
         <Addin id="Pinta" version="3.1" />
     </Dependencies>
+    <Runtime>
+        <Import assembly="ScriptEffects.dll" />
+    </Runtime>
 </Addin>

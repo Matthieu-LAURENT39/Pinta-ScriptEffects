@@ -7,10 +7,13 @@ namespace ScriptEffects
     {
         public void Initialize()
         {
+            IServiceProvider services = PintaCore.Services;
+            PintaCore.Effects.RegisterEffect(new ScriptEffect(services));
         }
 
         public void Uninitialize()
         {
+            PintaCore.Effects.UnregisterInstanceOfEffect<ScriptEffect>();
         }
     }
 }
