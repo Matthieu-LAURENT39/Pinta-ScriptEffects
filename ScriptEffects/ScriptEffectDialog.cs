@@ -12,6 +12,8 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
 
     private readonly ScriptEffectData data;
     private readonly ScriptCodeTextView editor;
+    private readonly Gtk.TextView lineNumbers;
+    private readonly Gtk.TextTag lineNumberTag;
     private readonly Gtk.Label statusLabel;
     private Gio.File? currentFile;
 
@@ -51,11 +53,32 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
 
         editor = new ScriptCodeTextView();
 
+        lineNumbers = Gtk.TextView.New();
+        lineNumbers.Editable = false;
+        lineNumbers.CursorVisible = false;
+        lineNumbers.CanFocus = false;
+        lineNumbers.CanTarget = false;
+        lineNumbers.Monospace = true;
+        lineNumbers.LeftMargin = 2;
+        lineNumbers.RightMargin = 2;
+        lineNumbers.WrapMode = Gtk.WrapMode.None;
+
+        lineNumberTag = Gtk.TextTag.New("script-line-number");
+        lineNumberTag.ForegroundRgba = new Gdk.RGBA { Red = 0.52f, Green = 0.55f, Blue = 0.60f, Alpha = 1f };
+        lineNumbers.Buffer!.GetTagTable()?.Add(lineNumberTag);
+
         // Load the initial script code into the editor.
         editor.ScriptText = data.ScriptCode;
+        RefreshLineNumbers();
+
+        editor.Buffer!.OnChanged += (_, _) => RefreshLineNumbers();
+
+        Gtk.Box editorArea = Gtk.Box.New(Gtk.Orientation.Horizontal, 0);
+        editorArea.Append(lineNumbers);
+        editorArea.Append(editor);
 
         Gtk.ScrolledWindow scroll = Gtk.ScrolledWindow.New();
-        scroll.SetChild(editor);
+        scroll.SetChild(editorArea);
         scroll.Hexpand = true;
         scroll.Vexpand = true;
         contentArea.Append(scroll);
@@ -274,5 +297,28 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         statusLabel.SetText("Compilation successful.");
 
         return true;
+    }
+
+    /// <summary>
+    /// Regenerates the line-number left bar so it stays in sync with the code editor.
+    /// </summary>
+    private void RefreshLineNumbers()
+    {
+        string text = editor.ScriptText;
+        int lineCount = Math.Max(1, text.Count(c => c == '\n') + 1);
+        int digits = lineCount.ToString().Length;
+
+        // Keep enough width so numbers don't get clipped
+        // TODO: this feels quite hacky, there's probably a better way to do this
+        lineNumbers.WidthRequest = (digits + 1) * 10;
+
+        string lineNumbersText = string.Join(
+            Environment.NewLine,
+            Enumerable.Range(1, lineCount).Select(line => line.ToString().PadLeft(digits)));
+
+        Gtk.TextBuffer buffer = lineNumbers.Buffer!;
+        buffer.Text = lineNumbersText;
+        buffer.GetBounds(out Gtk.TextIter start, out Gtk.TextIter end);
+        buffer.ApplyTag(lineNumberTag, start, end);
     }
 }
