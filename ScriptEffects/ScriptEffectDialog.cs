@@ -10,10 +10,6 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
 {
     private const string BaseTitle = "Script Effect";
 
-    internal static readonly Gtk.ResponseType OpenResponse = (Gtk.ResponseType)1001;
-    internal static readonly Gtk.ResponseType SaveResponse = (Gtk.ResponseType)1002;
-    internal static readonly Gtk.ResponseType SaveAsResponse = (Gtk.ResponseType)1003;
-
     private readonly ScriptEffectData data;
     private readonly ScriptCodeTextView editor;
     private readonly Gtk.Label statusLabel;
@@ -33,6 +29,25 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         Gtk.Box contentArea = this.GetContentAreaBox();
         contentArea.Spacing = 8;
         contentArea.SetAllMargins(8);
+
+        Gtk.Box topBar = Gtk.Box.New(Gtk.Orientation.Horizontal, 4);
+        topBar.Halign = Gtk.Align.Start;
+
+        // TODO: Surely we can do without the temporary allocation here?
+        (string icon, string tooltip, Func<Task> action)[] topBarButtons = [
+            ("document-open-symbolic", "Open script file", OpenScript),
+            ("document-save-symbolic", "Save script", SaveScript),
+            ("document-save-as-symbolic", "Save script as", SaveScriptAs)
+        ];
+        foreach ((string icon, string tooltip, Func<Task> action) in topBarButtons)
+        {
+            Gtk.Button button = Gtk.Button.NewFromIconName(icon);
+            button.TooltipText = tooltip;
+            button.OnClicked += async (_, _) => await action();
+            topBar.Append(button);
+        }
+
+        contentArea.Append(topBar);
 
         editor = new ScriptCodeTextView();
 
@@ -54,17 +69,46 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         contentArea.Append(statusLabel);
 
         AddButton(Translations.GetString("_Cancel"), (int)Gtk.ResponseType.Cancel);
-        AddButton(Translations.GetString("_Open"), (int)OpenResponse);
-        AddButton(Translations.GetString("_Save"), (int)SaveResponse);
-        AddButton(Translations.GetString("Save _As"), (int)SaveAsResponse);
         // TODO: Make this translatable
         AddButton("Preview", (int)Gtk.ResponseType.Apply);
         AddButton(Translations.GetString("_OK"), (int)Gtk.ResponseType.Ok);
         SetDefaultResponse((int)Gtk.ResponseType.Ok);
 
+        Gtk.EventControllerKey keyboardController = Gtk.EventControllerKey.New();
+        keyboardController.OnKeyPressed += OnKeyPressed;
+        AddController(keyboardController);
+
         UpdateWindowTitle();
 
         Show();
+    }
+
+    // TODO: Surely there is a native way to create shortcuts for buttons?
+    /// <summary>
+    /// Handles key press events for the dialog, implementing keyboard shortcuts for opening and saving scripts.
+    /// - Ctrl+O to "Open".
+    /// - Ctrl+S to "Save".
+    /// - Ctrl+Shift+S to "Save As".
+    /// </summary>
+    private bool OnKeyPressed(Gtk.EventControllerKey controller, Gtk.EventControllerKey.KeyPressedSignalArgs args)
+    {
+        // We only have ctrl shortcuts
+        if (!args.State.IsControlPressed())
+            return false;
+
+        uint key = args.GetKey().ToUpper().Value;
+        if (key == Gdk.Constants.KEY_O)
+        {
+            _ = OpenScript();
+            return true;
+        }
+        if (key == Gdk.Constants.KEY_S)
+        {
+            _ = args.State.IsShiftPressed() ? SaveScriptAs() : SaveScript();
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -107,7 +151,6 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
             data.ScriptCode = script;
             currentFile = selectedFile;
             UpdateWindowTitle();
-            statusLabel.SetText($"Opened: {selectedFile.GetParseName()}");
         }
         catch (Exception ex)
         {

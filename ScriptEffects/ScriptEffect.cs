@@ -43,24 +43,6 @@ public sealed class ScriptEffect : BaseEffect
                 continue;
             }
 
-            if (response == ScriptEffectDialog.OpenResponse)
-            {
-                await dialog.OpenScript();
-                continue;
-            }
-
-            if (response == ScriptEffectDialog.SaveResponse)
-            {
-                await dialog.SaveScript();
-                continue;
-            }
-
-            if (response == ScriptEffectDialog.SaveAsResponse)
-            {
-                await dialog.SaveScriptAs();
-                continue;
-            }
-
             if (response != Gtk.ResponseType.Ok)
             {
                 dialog.Destroy();
