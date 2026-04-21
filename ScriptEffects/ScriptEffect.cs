@@ -66,6 +66,14 @@ public sealed class ScriptEffect : BaseEffect
 public sealed class ScriptEffectData : EffectData
 {
     public static readonly string DefaultScript = """
+/// <summary>
+/// Function called when the effect is rendered.
+/// Write your rendering code here!
+/// </summary>
+/// <param name="source">The source image surface. It contains only the current layer.</param>
+/// <param name="destination">The destination image surface. Output the processed image here.</param>
+/// <param name="roi">The region of the image to render. This can be used to optimize rendering when only part of the image needs to be updated.
+/// When you have an active selection, this will be the bounding box of the selection, as changes outside the selection are discarded.</param>
 public static void Render(ImageSurface source, ImageSurface destination, RectangleI roi)
 {
 }
