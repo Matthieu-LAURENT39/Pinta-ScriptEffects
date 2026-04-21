@@ -7,8 +7,7 @@ namespace ScriptEffects;
 internal sealed class ScriptEffectDialog : Gtk.Dialog
 {
     private readonly ScriptEffectData data;
-    // TODO: swap for something more suited, possibly GtkSourceView
-    private readonly Gtk.TextView editor;
+    private readonly ScriptCodeTextView editor;
     private readonly Gtk.Label statusLabel;
 
     public ScriptEffectDialog(IChromeService chrome, ScriptEffectData data)
@@ -26,12 +25,10 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         contentArea.Spacing = 8;
         contentArea.SetAllMargins(8);
 
-        editor = Gtk.TextView.New();
-        editor.Monospace = true;
-        editor.Vexpand = true;
-        editor.Hexpand = true;
+        editor = new ScriptCodeTextView();
+
         // Load the initial script code into the editor.
-        editor.Buffer!.Text = data.ScriptCode;
+        editor.ScriptText = data.ScriptCode;
 
         Gtk.ScrolledWindow scroll = Gtk.ScrolledWindow.New();
         scroll.SetChild(editor);
@@ -63,7 +60,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     public bool TryCompileAndApply()
     {
         // TODO: should probably block the UI while compiling
-        string script = editor.Buffer?.Text ?? string.Empty;
+        string script = editor.ScriptText;
         data.ScriptCode = script;
 
         if (!ScriptEffectCompiler.TryCompile(script, out var render, out var errorMessage))
