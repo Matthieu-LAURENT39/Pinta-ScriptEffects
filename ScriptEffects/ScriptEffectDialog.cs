@@ -14,6 +14,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     private readonly ScriptCodeTextView editor;
     private readonly Gtk.TextView lineNumbers;
     private readonly Gtk.TextTag lineNumberTag;
+    private readonly Gtk.ScrolledWindow editorScroll;
     private readonly Gtk.Label statusLabel;
     private Gio.File? currentFile;
 
@@ -77,11 +78,11 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         editorArea.Append(lineNumbers);
         editorArea.Append(editor);
 
-        Gtk.ScrolledWindow scroll = Gtk.ScrolledWindow.New();
-        scroll.SetChild(editorArea);
-        scroll.Hexpand = true;
-        scroll.Vexpand = true;
-        contentArea.Append(scroll);
+        editorScroll = Gtk.ScrolledWindow.New();
+        editorScroll.SetChild(editorArea);
+        editorScroll.Hexpand = true;
+        editorScroll.Vexpand = true;
+        contentArea.Append(editorScroll);
 
         // This shows the compilation messages
         // TODO: could this support color?
@@ -279,6 +280,9 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     /// </summary>
     public bool TryCompileAndApply()
     {
+        double? savedH = editorScroll.Hadjustment?.Value;
+        double? savedV = editorScroll.Vadjustment?.Value;
+
         // TODO: should probably block the UI while compiling
         string script = editor.ScriptText;
         data.ScriptCode = script;
@@ -287,6 +291,8 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         {
             data.LastCompileError = errorMessage;
             statusLabel.SetText(errorMessage ?? "Compilation failed.");
+            editor.GrabFocus();
+            RestoreEditorScrollPosition(savedH, savedV);
             return false;
         }
 
@@ -295,6 +301,8 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         // Notify that the compiled render delegate has changed so that the effect can re-render with the new code
         data.FirePropertyChanged(nameof(ScriptEffectData.CompiledRender));
         statusLabel.SetText("Compilation successful.");
+        editor.GrabFocus();
+        RestoreEditorScrollPosition(savedH, savedV);
 
         return true;
     }
@@ -320,5 +328,30 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         buffer.Text = lineNumbersText;
         buffer.GetBounds(out Gtk.TextIter start, out Gtk.TextIter end);
         buffer.ApplyTag(lineNumberTag, start, end);
+    }
+
+    /// <summary>
+    /// Restores the editor scroll position after UI updates complete.
+    /// This is needed, otherwise the scroll position resets to the top after every compilation. Even worse, 
+    /// it would only actually "jump" once the user clicks anywhere in the editor, causing to select the wrong place.
+    /// </summary>
+    private void RestoreEditorScrollPosition(double? horizontal, double? vertical)
+    {
+        if (horizontal is null || vertical is null)
+            return;
+
+        // Queue this to run as soon as the UI thread is idle
+        GLib.Functions.IdleAdd(0, () =>
+        {
+            Gtk.Adjustment? h = editorScroll.Hadjustment;
+            Gtk.Adjustment? v = editorScroll.Vadjustment;
+
+            if (h is not null)
+                h.Value = Math.Clamp(horizontal.Value, h.Lower, Math.Max(h.Lower, h.Upper - h.PageSize));
+            if (v is not null)
+                v.Value = Math.Clamp(vertical.Value, v.Lower, Math.Max(v.Lower, v.Upper - v.PageSize));
+
+            return false;
+        });
     }
 }
