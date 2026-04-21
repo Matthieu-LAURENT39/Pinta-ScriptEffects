@@ -128,7 +128,11 @@ internal sealed class ScriptCodeTextView : Gtk.TextView
     {
         foreach (SyntaxTrivia trivia in triviaList)
         {
-            if (trivia.IsKind(SyntaxKind.SingleLineCommentTrivia) || trivia.IsKind(SyntaxKind.MultiLineCommentTrivia) || trivia.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia) || trivia.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia))
+            if (trivia.IsKind(SyntaxKind.SingleLineCommentTrivia)
+                || trivia.IsKind(SyntaxKind.MultiLineCommentTrivia)
+                || trivia.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia)
+                || trivia.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia)
+                || trivia.IsKind(SyntaxKind.DocumentationCommentExteriorTrivia))
                 ApplyTagToSpan(buffer, commentTag, trivia.SpanStart, trivia.Span.Length);
             else if (trivia.IsKind(SyntaxKind.PreprocessingMessageTrivia) || trivia.IsDirective)
                 ApplyTagToSpan(buffer, preprocessorTag, trivia.SpanStart, trivia.Span.Length);
