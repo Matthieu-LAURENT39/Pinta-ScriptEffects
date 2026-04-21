@@ -76,6 +76,38 @@ public sealed class ScriptEffectData : EffectData
 /// When you have an active selection, this will be the bounding box of the selection, as changes outside the selection are discarded.</param>
 public static void Render(ImageSurface source, ImageSurface destination, RectangleI roi)
 {
+    // Example: a simple gradient effect that blends with the original image.
+    ReadOnlySpan<ColorBgra> src = source.GetReadOnlyPixelData();
+    Span<ColorBgra> dst = destination.GetPixelData();
+
+    int width = source.Width;
+    int height = source.Height;
+
+    for (int y = roi.Y; y < roi.Bottom; y++)
+    {
+        int row = y * width;
+        // Vertical gradient (R)
+        byte r = (byte)(y * 255 / height);
+
+        for (int x = roi.X; x < roi.Right; x++)
+        {
+            int i = row + x;
+            // Horizontal gradient (G)
+            byte g = (byte)(x * 255 / width);
+
+            // Inverse average for B to add some variation
+            byte b = (byte)(255 - ((r + g) / 2));
+
+            // Blend the gradient with the original image with 50% opacity
+            ColorBgra c = src[i];
+            dst[i] = ColorBgra.FromBgra(
+                (byte)((c.B + b) / 2),
+                (byte)((c.G + g) / 2),
+                (byte)((c.R + r) / 2),
+                c.A
+            );
+        }
+    }
 }
 """;
 
