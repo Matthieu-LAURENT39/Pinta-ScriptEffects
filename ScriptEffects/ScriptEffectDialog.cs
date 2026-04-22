@@ -38,6 +38,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
 
         // TODO: Surely we can do without the temporary allocation here?
         (string icon, string tooltip, Func<Task> action)[] topBarButtons = [
+            ("document-new-symbolic", "New script", NewScript),
             ("document-open-symbolic", "Open script file", OpenScript),
             ("document-save-symbolic", "Save script", SaveScript),
             ("document-save-as-symbolic", "Save script as", SaveScriptAs)
@@ -110,6 +111,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     // TODO: Surely there is a native way to create shortcuts for buttons?
     /// <summary>
     /// Handles key press events for the dialog, implementing keyboard shortcuts for opening and saving scripts.
+    /// - Ctrl+N to "New".
     /// - Ctrl+O to "Open".
     /// - Ctrl+S to "Save".
     /// - Ctrl+Shift+S to "Save As".
@@ -121,6 +123,11 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
             return false;
 
         uint key = args.GetKey().ToUpper().Value;
+        if (key == Gdk.Constants.KEY_N)
+        {
+            _ = NewScript();
+            return true;
+        }
         if (key == Gdk.Constants.KEY_O)
         {
             _ = OpenScript();
@@ -133,6 +140,19 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Opens a new blank script in the editor.
+    /// </summary>
+    public Task NewScript()
+    {
+        editor.ScriptText = ScriptEffectData.DefaultScript;
+        data.ScriptCode = ScriptEffectData.DefaultScript;
+        currentFile = null;
+        statusLabel.SetText(string.Empty);
+        UpdateWindowTitle();
+        return Task.CompletedTask;
     }
 
     /// <summary>
