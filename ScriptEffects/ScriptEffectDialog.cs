@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Pinta.Core;
 
@@ -15,13 +16,17 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     private readonly Gtk.TextView lineNumbers;
     private readonly Gtk.TextTag lineNumberTag;
     private readonly Gtk.ScrolledWindow editorScroll;
+    private readonly List<Gtk.Widget> topBarButtons;
+    private readonly Gtk.Widget[] responseButtons;
     private readonly Gtk.Label statusLabel;
+    private readonly Gtk.Spinner compileSpinner;
     // Storing the whole saved script just to detect unsaved changes is a bit
     // memory-inefficient, but it's simple to implement and shouldn't be a problem
     // for script editing. If this becomes an issue later, we can just look into storing 
     // a hash of the saved script or something like that.
     private string savedEditorScript;
     private Gio.File? currentFile;
+    private bool isCompiling;
 
     public ScriptEffectDialog(IChromeService chrome, ScriptEffectData data)
     {
@@ -49,12 +54,14 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
             ("document-save-symbolic", "Save script", SaveScript),
             ("document-save-as-symbolic", "Save script as", SaveScriptAs)
         ];
+        this.topBarButtons = [];
         foreach ((string icon, string tooltip, Func<Task> action) in topBarButtons)
         {
             Gtk.Button button = Gtk.Button.NewFromIconName(icon);
             button.TooltipText = tooltip;
             button.OnClicked += async (_, _) => await action();
             topBar.Append(button);
+            this.topBarButtons.Add(button);
         }
 
         contentArea.Append(topBar);
@@ -91,18 +98,25 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         editorScroll.Vexpand = true;
         contentArea.Append(editorScroll);
 
+        Gtk.Box statusArea = Gtk.Box.New(Gtk.Orientation.Horizontal, 6);
+        compileSpinner = Gtk.Spinner.New();
+        compileSpinner.Visible = false;
+        statusArea.Append(compileSpinner);
+
         // This shows the compilation messages
         // TODO: could this support color?
         statusLabel = Gtk.Label.New(string.Empty);
         statusLabel.Xalign = 0;
         statusLabel.Wrap = true;
         statusLabel.Selectable = true;
-        contentArea.Append(statusLabel);
+        statusArea.Append(statusLabel);
+        contentArea.Append(statusArea);
 
-        AddButton(Translations.GetString("_Cancel"), (int)Gtk.ResponseType.Cancel);
+        Gtk.Widget cancelButton = AddButton(Translations.GetString("_Cancel"), (int)Gtk.ResponseType.Cancel);
         // TODO: Make this translatable
-        AddButton("Preview", (int)Gtk.ResponseType.Apply);
-        AddButton(Translations.GetString("_OK"), (int)Gtk.ResponseType.Ok);
+        Gtk.Widget previewButton = AddButton("Preview", (int)Gtk.ResponseType.Apply);
+        Gtk.Widget okButton = AddButton(Translations.GetString("_OK"), (int)Gtk.ResponseType.Ok);
+        responseButtons = [cancelButton, previewButton, okButton];
         SetDefaultResponse((int)Gtk.ResponseType.Ok);
 
         Gtk.EventControllerKey keyboardController = Gtk.EventControllerKey.New();
@@ -124,6 +138,10 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     /// </summary>
     private bool OnKeyPressed(Gtk.EventControllerKey controller, Gtk.EventControllerKey.KeyPressedSignalArgs args)
     {
+        // Compiling blocks the UI, so prevent calling the actions with shortcuts too
+        if (isCompiling)
+            return true;
+
         // We only have ctrl shortcuts
         if (!args.State.IsControlPressed())
             return false;
@@ -372,16 +390,30 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     /// Tries to compile the script and apply it to the effect data if successful.
     /// Any compilation errors are shown in the status label.
     /// </summary>
-    public bool TryCompileAndApply()
+    public async Task<bool> TryCompileAndApply()
     {
+        if (isCompiling)
+            return false;
+
         double? savedH = editorScroll.Hadjustment?.Value;
         double? savedV = editorScroll.Vadjustment?.Value;
 
-        // TODO: should probably block the UI while compiling
         string script = editor.ScriptText;
         data.ScriptCode = script;
 
-        if (!ScriptEffectCompiler.TryCompile(script, out var render, out var errorMessage))
+        SetCompilingState(compiling: true);
+        statusLabel.SetText("Compiling...");
+
+        (bool success, Action<Cairo.ImageSurface, Cairo.ImageSurface, RectangleI>? render, string? errorMessage) =
+            await Task.Run(() =>
+            {
+                bool compileSuccess = ScriptEffectCompiler.TryCompile(script, out var compiledRender, out var compileErrorMessage);
+                return (compileSuccess, compiledRender, compileErrorMessage);
+            });
+
+        SetCompilingState(compiling: false);
+
+        if (!success)
         {
             data.LastCompileError = errorMessage;
             statusLabel.SetText(errorMessage ?? "Compilation failed.");
@@ -399,6 +431,35 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         RestoreEditorScrollPosition(savedH, savedV);
 
         return true;
+    }
+
+    /// <summary>
+    /// Sets the compiling state of the dialog.
+    /// When compiling, the editor and buttons are disabled, and a spinner is shown.
+    /// </summary>
+    /// <param name="compiling">True if the dialog is compiling, false otherwise.</param>
+    private void SetCompilingState(bool compiling)
+    {
+        isCompiling = compiling;
+        editor.Sensitive = !compiling;
+
+        foreach (Gtk.Widget button in topBarButtons)
+            button.Sensitive = !compiling;
+
+        foreach (Gtk.Widget button in responseButtons)
+            button.Sensitive = !compiling;
+
+        if (compiling)
+        {
+            compileSpinner.Visible = true;
+            compileSpinner.Start();
+        }
+        else
+        {
+            compileSpinner.Stop();
+            compileSpinner.Visible = false;
+        }
+
     }
 
     /// <summary>

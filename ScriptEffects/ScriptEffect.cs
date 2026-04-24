@@ -39,7 +39,7 @@ public sealed class ScriptEffect : BaseEffect
 
             if (response == Gtk.ResponseType.Apply)
             {
-                dialog.TryCompileAndApply(); // Keep the dialog open for iterative previewing.
+                await dialog.TryCompileAndApply(); // Keep the dialog open for iterative previewing.
                 continue;
             }
 
@@ -52,7 +52,7 @@ public sealed class ScriptEffect : BaseEffect
                 return false;
             }
 
-            if (dialog.TryCompileAndApply())
+            if (await dialog.TryCompileAndApply())
             {
                 dialog.Destroy();
                 return true;
