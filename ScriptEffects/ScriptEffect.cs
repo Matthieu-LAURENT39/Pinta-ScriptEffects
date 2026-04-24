@@ -205,7 +205,8 @@ public static class UserScript
 
         if (!result.Success)
         {
-            errorMessage = FormatDiagnostics(result.Diagnostics);
+            int userCodeLineOffset = (WrapperPrefix + Environment.NewLine).Count(c => c == '\n');
+            errorMessage = FormatDiagnostics(result.Diagnostics, userCodeLineOffset);
             return false;
         }
 
@@ -238,7 +239,11 @@ public static class UserScript
     /// This is mainly to make sure the line numbers in the error messages correspond to the lines 
     /// in the editor, by accounting for the wrapper code's lines that the user can't see.
     /// </summary>
-    private static string FormatDiagnostics(IEnumerable<Diagnostic> diagnostics)
+    /// <param name="diagnostics">The diagnostics to format</param>
+    /// <param name="userCodeLineOffset">The number of lines in the wrapper code before the user code starts
+    /// This is needed to map the line numbers to the editor's content.</param>
+    /// <returns>The formatted error message string</returns>
+    private static string FormatDiagnostics(IEnumerable<Diagnostic> diagnostics, int userCodeLineOffset)
     {
         // Only show errors
         // TODO: maybe have a way to show warnings?
@@ -255,7 +260,7 @@ public static class UserScript
 
                 var span = diagnostic.Location.GetLineSpan();
                 // Subtract the wrapper lines so line numbers map to the editor's content.
-                int line = Math.Max(1, span.StartLinePosition.Line + 1 - WrapperPrefix.Count(c => c == '\n'));
+                int line = Math.Max(1, span.StartLinePosition.Line + 1 - userCodeLineOffset);
                 int column = span.StartLinePosition.Character + 1;
                 return $"Line {line}, Col {column}: {diagnostic.GetMessage()}";
             }));
