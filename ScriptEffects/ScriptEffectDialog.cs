@@ -120,6 +120,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         SetDefaultResponse((int)Gtk.ResponseType.Ok);
 
         Gtk.EventControllerKey keyboardController = Gtk.EventControllerKey.New();
+        keyboardController.SetPropagationPhase(Gtk.PropagationPhase.Capture);
         keyboardController.OnKeyPressed += OnKeyPressed;
         AddController(keyboardController);
 
@@ -135,6 +136,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     /// - Ctrl+O to "Open".
     /// - Ctrl+S to "Save".
     /// - Ctrl+Shift+S to "Save As".
+    /// - Ctrl+Enter to "Preview".
     /// </summary>
     private bool OnKeyPressed(Gtk.EventControllerKey controller, Gtk.EventControllerKey.KeyPressedSignalArgs args)
     {
@@ -147,6 +149,13 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
             return false;
 
         uint key = args.GetKey().ToUpper().Value;
+
+        if (key == Gdk.Constants.KEY_Return || key == Gdk.Constants.KEY_KP_Enter)
+        {
+            Response((int)Gtk.ResponseType.Apply);
+            return true;
+        }
+
         Func<Task>? action = key switch
         {
             Gdk.Constants.KEY_N => NewScript,
