@@ -16,11 +16,17 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     private readonly Gtk.TextTag lineNumberTag;
     private readonly Gtk.ScrolledWindow editorScroll;
     private readonly Gtk.Label statusLabel;
+    // Storing the whole saved script just to detect unsaved changes is a bit
+    // memory-inefficient, but it's simple to implement and shouldn't be a problem
+    // for script editing. If this becomes an issue later, we can just look into storing 
+    // a hash of the saved script or something like that.
+    private string savedEditorScript;
     private Gio.File? currentFile;
 
     public ScriptEffectDialog(IChromeService chrome, ScriptEffectData data)
     {
         this.data = data;
+        savedEditorScript = data.ScriptCode;
 
         Title = BaseTitle;
         TransientFor = chrome.MainWindow;
@@ -123,36 +129,38 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
             return false;
 
         uint key = args.GetKey().ToUpper().Value;
-        if (key == Gdk.Constants.KEY_N)
+        Func<Task>? action = key switch
         {
-            _ = NewScript();
-            return true;
-        }
-        if (key == Gdk.Constants.KEY_O)
-        {
-            _ = OpenScript();
-            return true;
-        }
-        if (key == Gdk.Constants.KEY_S)
-        {
-            _ = args.State.IsShiftPressed() ? SaveScriptAs() : SaveScript();
-            return true;
-        }
+            Gdk.Constants.KEY_N => NewScript,
+            Gdk.Constants.KEY_O => OpenScript,
+            Gdk.Constants.KEY_S => args.State.IsShiftPressed() ? SaveScriptAs : SaveScript,
+            _ => null,
+        };
 
-        return false;
+        if (action is null)
+            return false;
+
+        _ = action();
+        return true;
     }
+
+    private bool HasUnsavedEditorChanges => editor.ScriptText != savedEditorScript;
 
     /// <summary>
     /// Opens a new blank script in the editor.
     /// </summary>
-    public Task NewScript()
+    public async Task NewScript()
     {
+        if (!await ConfirmDiscardUnsavedEditorChangesAsync(
+                Translations.GetString("Save script changes before creating a new script?")))
+            return;
+
         editor.ScriptText = ScriptEffectData.DefaultScript;
         data.ScriptCode = ScriptEffectData.DefaultScript;
+        savedEditorScript = ScriptEffectData.DefaultScript;
         currentFile = null;
         statusLabel.SetText(string.Empty);
         UpdateWindowTitle();
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -160,6 +168,10 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     /// </summary>
     public async Task OpenScript()
     {
+        if (!await ConfirmDiscardUnsavedEditorChangesAsync(
+                Translations.GetString("Save script changes before opening another script file?")))
+            return;
+
         using Gtk.FileFilter scriptFilter = Gtk.FileFilter.New();
         scriptFilter.Name = "Script files";
         scriptFilter.AddPattern("*.cs");
@@ -193,6 +205,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
 
             editor.ScriptText = script;
             data.ScriptCode = script;
+            savedEditorScript = script;
             currentFile = selectedFile;
             UpdateWindowTitle();
         }
@@ -270,11 +283,72 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
             using GioStream stream = new(file.Replace());
             using StreamWriter writer = new(stream);
             writer.Write(script);
+            savedEditorScript = script;
         }
         catch (Exception ex)
         {
             statusLabel.SetText($"Failed to save file: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Asks for confirmation before discarding unsaved editor changes.
+    /// If there are no unsaved changes, this returns true immediately.
+    /// </summary>
+    /// <param name="heading">The dialog heading shown to the user.</param>
+    /// <returns>true if the action can continue, otherwise false.</returns>
+    private async Task<bool> ConfirmDiscardUnsavedEditorChangesAsync(string heading)
+    {
+        if (!HasUnsavedEditorChanges)
+            return true;
+
+        using Adw.MessageDialog dialog = Adw.MessageDialog.New(
+            this,
+            heading,
+            Translations.GetString("If you don't save, all changes since the last save will be lost."));
+
+        dialog.AddResponse("cancel", Translations.GetString("_Cancel"));
+        dialog.AddResponse("discard", Translations.GetString("_Discard"));
+        dialog.AddResponse("save", Translations.GetString("_Save"));
+
+        dialog.SetResponseAppearance("discard", Adw.ResponseAppearance.Destructive);
+        dialog.SetResponseAppearance("save", Adw.ResponseAppearance.Suggested);
+        dialog.DefaultResponse = "save";
+        dialog.CloseResponse = "cancel";
+
+        string response = await dialog.RunAsync();
+        if (response == "save")
+        {
+            await SaveScript();
+            // The save could have failed or been cancelled, so we check again
+            return !HasUnsavedEditorChanges;
+        }
+
+        return response == "discard";
+    }
+
+    /// <summary>
+    /// Asks for confirmation before discarding pending dialog changes.
+    /// </summary>
+    /// <returns>true if the dialog can close, otherwise false.</returns>
+    public async Task<bool> ConfirmDiscardPendingDialogChanges()
+    {
+        if (!HasUnsavedEditorChanges)
+            return true;
+
+        using Adw.MessageDialog dialog = Adw.MessageDialog.New(
+            this,
+            Translations.GetString("Discard script changes?"),
+            Translations.GetString("If you close now, your script changes will be lost."));
+
+        dialog.AddResponse("cancel", Translations.GetString("_Cancel"));
+        dialog.AddResponse("discard", Translations.GetString("_Discard"));
+
+        dialog.SetResponseAppearance("discard", Adw.ResponseAppearance.Destructive);
+        dialog.DefaultResponse = "cancel";
+        dialog.CloseResponse = "cancel";
+
+        return await dialog.RunAsync() == "discard";
     }
 
     /// <summary>

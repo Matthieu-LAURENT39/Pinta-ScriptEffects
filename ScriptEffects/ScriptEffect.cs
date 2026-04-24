@@ -45,6 +45,9 @@ public sealed class ScriptEffect : BaseEffect
 
             if (response != Gtk.ResponseType.Ok)
             {
+                if (!await dialog.ConfirmDiscardPendingDialogChanges())
+                    continue;
+
                 dialog.Destroy();
                 return false;
             }
