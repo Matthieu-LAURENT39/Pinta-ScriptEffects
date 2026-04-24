@@ -48,17 +48,18 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         topBar.Halign = Gtk.Align.Start;
 
         // TODO: Surely we can do without the temporary allocation here?
-        (string icon, string tooltip, Func<Task> action)[] topBarButtons = [
-            ("document-new-symbolic", "New script", NewScript),
-            ("document-open-symbolic", "Open script file", OpenScript),
-            ("document-save-symbolic", "Save script", SaveScript),
-            ("document-save-as-symbolic", "Save script as", SaveScriptAs)
+        (string icon, string tooltip, string shortcut, Func<Task> action)[] topBarButtons = [
+            // TODO: Translate the tooltips
+            ("document-new-symbolic", "New script", "Ctrl+N", NewScript),
+            ("document-open-symbolic", "Open script file", "Ctrl+O", OpenScript),
+            ("document-save-symbolic", "Save script", "Ctrl+S", SaveScript),
+            ("document-save-as-symbolic", "Save script as", "Ctrl+Shift+S", SaveScriptAs)
         ];
         this.topBarButtons = [];
-        foreach ((string icon, string tooltip, Func<Task> action) in topBarButtons)
+        foreach ((string icon, string tooltip, string shortcut, Func<Task> action) in topBarButtons)
         {
             Gtk.Button button = Gtk.Button.NewFromIconName(icon);
-            button.TooltipText = tooltip;
+            button.TooltipText = $"{tooltip} ({shortcut})";
             button.OnClicked += async (_, _) => await action();
             topBar.Append(button);
             this.topBarButtons.Add(button);
@@ -115,8 +116,9 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         Gtk.Widget cancelButton = AddButton(Translations.GetString("_Cancel"), (int)Gtk.ResponseType.Cancel);
         // TODO: Make this translatable
         Gtk.Widget previewButton = AddButton("Preview", (int)Gtk.ResponseType.Apply);
-        Gtk.Widget okButton = AddButton(Translations.GetString("_OK"), (int)Gtk.ResponseType.Ok);
-        responseButtons = [cancelButton, previewButton, okButton];
+        Gtk.Widget applyButton = AddButton(Translations.GetString("_Apply"), (int)Gtk.ResponseType.Ok);
+        previewButton.TooltipText = "Preview (Ctrl+Enter)";
+        responseButtons = [cancelButton, previewButton, applyButton];
         SetDefaultResponse((int)Gtk.ResponseType.Ok);
 
         Gtk.EventControllerKey keyboardController = Gtk.EventControllerKey.New();
