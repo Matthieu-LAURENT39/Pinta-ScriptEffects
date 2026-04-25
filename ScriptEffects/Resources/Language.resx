@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema id="root"
+        xmlns=""
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+        <xsd:element name="root" msdata:IsDataSet="true">
+            <xsd:complexType>
+                <xsd:choice maxOccurs="unbounded">
+                    <xsd:element name="metadata">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+                            </xsd:sequence>
+                            <xsd:attribute name="name" use="required" type="xsd:string"/>
+                            <xsd:attribute name="type" type="xsd:string"/>
+                            <xsd:attribute name="mimetype" type="xsd:string"/>
+                            <xsd:attribute ref="xml:space"/>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="assembly">
+                        <xsd:complexType>
+                            <xsd:attribute name="alias" type="xsd:string"/>
+                            <xsd:attribute name="name" type="xsd:string"/>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+                            <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+                            <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+                            <xsd:attribute ref="xml:space"/>
+                        </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="resheader">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" use="required"/>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:choice>
+            </xsd:complexType>
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+
+    <!-- Add-in metadata -->
+    <data name="ScriptEffects" xml:space="preserve">
+        <value>ScriptEffects</value>
+    </data>
+    <data name="Apply C# scripts as effects." xml:space="preserve">
+        <value>Apply C# scripts as effects.</value>
+    </data>
+    <!-- Code -->
+    <data name="Script Effect" xml:space="preserve">
+        <value>Script Effect</value>
+    </data>
+    <data name="Render" xml:space="preserve">
+        <value>Render</value>
+    </data>
+    <data name="New script" xml:space="preserve">
+        <value>New script</value>
+    </data>
+    <data name="Open script file" xml:space="preserve">
+        <value>Open script file</value>
+    </data>
+    <data name="Save script" xml:space="preserve">
+        <value>Save script</value>
+    </data>
+    <data name="Save script as" xml:space="preserve">
+        <value>Save script as</value>
+    </data>
+    <data name="Preview" xml:space="preserve">
+        <value>Preview</value>
+    </data>
+    <data name="_Apply" xml:space="preserve">
+        <value>_Apply</value>
+    </data>
+    <data name="Save script changes before creating a new script?" xml:space="preserve">
+        <value>Save script changes before creating a new script?</value>
+    </data>
+    <data name="Save script changes before opening another script file?" xml:space="preserve">
+        <value>Save script changes before opening another script file?</value>
+    </data>
+    <data name="Script files" xml:space="preserve">
+        <value>Script files</value>
+    </data>
+    <data name="Open Script File" xml:space="preserve">
+        <value>Open Script File</value>
+    </data>
+    <data name="Save Script File" xml:space="preserve">
+        <value>Save Script File</value>
+    </data>
+    <data name="Failed to open file: {0}" xml:space="preserve">
+        <value>Failed to open file: {0}</value>
+    </data>
+    <data name="Failed to save file: {0}" xml:space="preserve">
+        <value>Failed to save file: {0}</value>
+    </data>
+    <data name="If you don't save, all changes since the last save will be lost." xml:space="preserve">
+        <value>If you don't save, all changes since the last save will be lost.</value>
+    </data>
+    <data name="Discard script changes?" xml:space="preserve">
+        <value>Discard script changes?</value>
+    </data>
+    <data name="If you close now, your script changes will be lost." xml:space="preserve">
+        <value>If you close now, your script changes will be lost.</value>
+    </data>
+    <data name="&lt;untitled&gt;" xml:space="preserve">
+        <value>&lt;untitled&gt;</value>
+    </data>
+    <data name="Compiling..." xml:space="preserve">
+        <value>Compiling...</value>
+    </data>
+    <data name="Compilation failed." xml:space="preserve">
+        <value>Compilation failed.</value>
+    </data>
+    <data name="Compilation successful." xml:space="preserve">
+        <value>Compilation successful.</value>
+    </data>
+    <data name="Could not find method: {0}." xml:space="preserve">
+        <value>Could not find method: {0}.</value>
+    </data>
+    <data name="Line {0}, Col {1}: {2}" xml:space="preserve">
+        <value>Line {0}, Col {1}: {2}</value>
+    </data>
+</root>

@@ -25,4 +25,9 @@
     <EmbeddedResource Include="./.addin.xml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Resources/Language.resx" />
+    <None Include="Resources/Language.*.resx" />
+  </ItemGroup>
+
 </Project>

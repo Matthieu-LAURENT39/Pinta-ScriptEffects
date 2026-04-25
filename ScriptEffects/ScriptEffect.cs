@@ -3,7 +3,10 @@ using Cairo;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
+
 using Pinta.Core;
+
+using static ScriptEffects.Utils;
 
 namespace ScriptEffects;
 
@@ -17,11 +20,10 @@ public sealed class ScriptEffect : BaseEffect
         EffectData = new ScriptEffectData();
     }
 
-    // TODO: Make this translatable once sure about the name.
-    public override string Name => Translations.GetString("Script Effect");
+    public override string Name => L("Script Effect");
 
     // TODO: Not sure if this is where it makes the most sense to put it
-    public override string EffectMenuCategory => Translations.GetString("Render");
+    public override string EffectMenuCategory => PL("Render");
 
     public override bool IsConfigurable => true;
 
@@ -165,6 +167,8 @@ public static class UserScript
 }
 """;
 
+    private const string RequiredRenderSignature = "public static void Render(ImageSurface source, ImageSurface destination, RectangleI roi)";
+
     /// <summary>
     /// Tries to compile the user-provided script code into a render method.
     /// If successful, the render delegate is returned.
@@ -223,7 +227,7 @@ public static class UserScript
 
         if (method is null)
         {
-            errorMessage = "Could not find method: public static void Render(ImageSurface source, ImageSurface destination, RectangleI roi).";
+            errorMessage = string.Format(L("Could not find method: {0}."), RequiredRenderSignature);
             return false;
         }
 
@@ -262,7 +266,11 @@ public static class UserScript
                 // Subtract the wrapper lines so line numbers map to the editor's content.
                 int line = Math.Max(1, span.StartLinePosition.Line + 1 - userCodeLineOffset);
                 int column = span.StartLinePosition.Character + 1;
-                return $"Line {line}, Col {column}: {diagnostic.GetMessage()}";
+                return string.Format(
+                    L("Line {0}, Col {1}: {2}"),
+                    line,
+                    column,
+                    diagnostic.GetMessage());
             }));
     }
 }

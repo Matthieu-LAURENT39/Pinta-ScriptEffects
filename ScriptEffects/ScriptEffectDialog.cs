@@ -2,15 +2,17 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+
 using Pinta.Core;
+
+using static ScriptEffects.Utils;
 
 namespace ScriptEffects;
 
 // Dialog for editing the script of ScriptEffect.
 internal sealed class ScriptEffectDialog : Gtk.Dialog
 {
-    private const string BaseTitle = "Script Effect";
-
+    private static string BaseTitle => L("Script Effect");
     private readonly ScriptEffectData data;
     private readonly ScriptCodeTextView editor;
     private readonly Gtk.TextView lineNumbers;
@@ -49,11 +51,10 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
 
         // TODO: Surely we can do without the temporary allocation here?
         (string icon, string tooltip, string shortcut, Func<Task> action)[] topBarButtons = [
-            // TODO: Translate the tooltips
-            ("document-new-symbolic", "New script", "Ctrl+N", NewScript),
-            ("document-open-symbolic", "Open script file", "Ctrl+O", OpenScript),
-            ("document-save-symbolic", "Save script", "Ctrl+S", SaveScript),
-            ("document-save-as-symbolic", "Save script as", "Ctrl+Shift+S", SaveScriptAs)
+            ("document-new-symbolic", L("New script"), "Ctrl+N", NewScript),
+            ("document-open-symbolic", L("Open script file"), "Ctrl+O", OpenScript),
+            ("document-save-symbolic", L("Save script"), "Ctrl+S", SaveScript),
+            ("document-save-as-symbolic", L("Save script as"), "Ctrl+Shift+S", SaveScriptAs)
         ];
         this.topBarButtons = [];
         foreach ((string icon, string tooltip, string shortcut, Func<Task> action) in topBarButtons)
@@ -113,11 +114,10 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         statusArea.Append(statusLabel);
         contentArea.Append(statusArea);
 
-        Gtk.Widget cancelButton = AddButton(Translations.GetString("_Cancel"), (int)Gtk.ResponseType.Cancel);
-        // TODO: Make this translatable
-        Gtk.Widget previewButton = AddButton("Preview", (int)Gtk.ResponseType.Apply);
-        Gtk.Widget applyButton = AddButton(Translations.GetString("_Apply"), (int)Gtk.ResponseType.Ok);
-        previewButton.TooltipText = "Preview (Ctrl+Enter)";
+        Gtk.Widget cancelButton = AddButton(PL("_Cancel"), (int)Gtk.ResponseType.Cancel);
+        Gtk.Widget previewButton = AddButton(L("Preview"), (int)Gtk.ResponseType.Apply);
+        Gtk.Widget applyButton = AddButton(L("_Apply"), (int)Gtk.ResponseType.Ok);
+        previewButton.TooltipText = $"{L("Preview")} (Ctrl+Enter)";
         responseButtons = [cancelButton, previewButton, applyButton];
         SetDefaultResponse((int)Gtk.ResponseType.Ok);
 
@@ -181,7 +181,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     public async Task NewScript()
     {
         if (!await ConfirmDiscardUnsavedEditorChangesAsync(
-                Translations.GetString("Save script changes before creating a new script?")))
+            L("Save script changes before creating a new script?")))
             return;
 
         editor.ScriptText = ScriptEffectData.DefaultScript;
@@ -198,15 +198,15 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     public async Task OpenScript()
     {
         if (!await ConfirmDiscardUnsavedEditorChangesAsync(
-                Translations.GetString("Save script changes before opening another script file?")))
+            L("Save script changes before opening another script file?")))
             return;
 
         using Gtk.FileFilter scriptFilter = Gtk.FileFilter.New();
-        scriptFilter.Name = "Script files";
+        scriptFilter.Name = L("Script files");
         scriptFilter.AddPattern("*.cs");
 
         using Gtk.FileFilter allFilesFilter = Gtk.FileFilter.New();
-        allFilesFilter.Name = Translations.GetString("All files");
+        allFilesFilter.Name = PL("All files");
         allFilesFilter.AddPattern("*");
 
         using Gio.ListStore fileFilters = Gio.ListStore.New(Gtk.FileFilter.GetGType());
@@ -214,7 +214,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         fileFilters.Append(allFilesFilter);
 
         using Gtk.FileDialog fileDialog = Gtk.FileDialog.New();
-        fileDialog.SetTitle("Open Script File");
+        fileDialog.SetTitle(L("Open Script File"));
         fileDialog.SetFilters(fileFilters);
         fileDialog.Modal = true;
 
@@ -240,7 +240,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         }
         catch (Exception ex)
         {
-            statusLabel.SetText($"Failed to open file: {ex.Message}");
+            statusLabel.SetText(string.Format(L("Failed to open file: {0}"), ex.Message));
         }
     }
 
@@ -263,11 +263,11 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     public async Task SaveScriptAs()
     {
         using Gtk.FileFilter scriptFilter = Gtk.FileFilter.New();
-        scriptFilter.Name = "Script files";
+        scriptFilter.Name = L("Script files");
         scriptFilter.AddPattern("*.cs");
 
         using Gtk.FileFilter allFilesFilter = Gtk.FileFilter.New();
-        allFilesFilter.Name = Translations.GetString("All files");
+        allFilesFilter.Name = PL("All files");
         allFilesFilter.AddPattern("*");
 
         using Gio.ListStore fileFilters = Gio.ListStore.New(Gtk.FileFilter.GetGType());
@@ -275,7 +275,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         fileFilters.Append(allFilesFilter);
 
         using Gtk.FileDialog fileDialog = Gtk.FileDialog.New();
-        fileDialog.SetTitle("Save Script File");
+        fileDialog.SetTitle(L("Save Script File"));
         fileDialog.SetFilters(fileFilters);
         fileDialog.Modal = true;
 
@@ -316,7 +316,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         }
         catch (Exception ex)
         {
-            statusLabel.SetText($"Failed to save file: {ex.Message}");
+            statusLabel.SetText(string.Format(L("Failed to save file: {0}"), ex.Message));
         }
     }
 
@@ -334,11 +334,11 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         using Adw.MessageDialog dialog = Adw.MessageDialog.New(
             this,
             heading,
-            Translations.GetString("If you don't save, all changes since the last save will be lost."));
+            L("If you don't save, all changes since the last save will be lost."));
 
-        dialog.AddResponse("cancel", Translations.GetString("_Cancel"));
-        dialog.AddResponse("discard", Translations.GetString("_Discard"));
-        dialog.AddResponse("save", Translations.GetString("_Save"));
+        dialog.AddResponse("cancel", PL("_Cancel"));
+        dialog.AddResponse("discard", PL("_Discard"));
+        dialog.AddResponse("save", PL("_Save"));
 
         dialog.SetResponseAppearance("discard", Adw.ResponseAppearance.Destructive);
         dialog.SetResponseAppearance("save", Adw.ResponseAppearance.Suggested);
@@ -367,11 +367,11 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
 
         using Adw.MessageDialog dialog = Adw.MessageDialog.New(
             this,
-            Translations.GetString("Discard script changes?"),
-            Translations.GetString("If you close now, your script changes will be lost."));
+            L("Discard script changes?"),
+            L("If you close now, your script changes will be lost."));
 
-        dialog.AddResponse("cancel", Translations.GetString("_Cancel"));
-        dialog.AddResponse("discard", Translations.GetString("_Discard"));
+        dialog.AddResponse("cancel", PL("_Cancel"));
+        dialog.AddResponse("discard", PL("_Discard"));
 
         dialog.SetResponseAppearance("discard", Adw.ResponseAppearance.Destructive);
         dialog.DefaultResponse = "cancel";
@@ -385,7 +385,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
     /// </summary>
     private void UpdateWindowTitle()
     {
-        string fileName = "<untitled>";
+        string fileName = L("<untitled>");
         if (currentFile is not null)
         {
             string? path = currentFile.GetPath();
@@ -413,7 +413,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         data.ScriptCode = script;
 
         SetCompilingState(compiling: true);
-        statusLabel.SetText("Compiling...");
+        statusLabel.SetText(L("Compiling..."));
 
         (bool success, Action<Cairo.ImageSurface, Cairo.ImageSurface, RectangleI>? render, string? errorMessage) =
             await Task.Run(() =>
@@ -427,7 +427,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         if (!success)
         {
             data.LastCompileError = errorMessage;
-            statusLabel.SetText(errorMessage ?? "Compilation failed.");
+            statusLabel.SetText(errorMessage ?? L("Compilation failed."));
             editor.GrabFocus();
             RestoreEditorScrollPosition(savedH, savedV);
             return false;
@@ -437,7 +437,7 @@ internal sealed class ScriptEffectDialog : Gtk.Dialog
         data.LastCompileError = null;
         // Notify that the compiled render delegate has changed so that the effect can re-render with the new code
         data.FirePropertyChanged(nameof(ScriptEffectData.CompiledRender));
-        statusLabel.SetText("Compilation successful.");
+        statusLabel.SetText(L("Compilation successful."));
         editor.GrabFocus();
         RestoreEditorScrollPosition(savedH, savedV);
 
