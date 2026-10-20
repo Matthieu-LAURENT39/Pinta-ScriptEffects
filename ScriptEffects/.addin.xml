@@ -4,7 +4,7 @@
         <Name>ScriptEffects</Name>
         <Description>Apply C# scripts as effects.</Description>
         <Author>Matthieu L</Author>
-        <Url>https://github.com/Matthieu-LAURENT39/ScriptEffects-Addin</Url>
+        <Url>https://github.com/Matthieu-LAURENT39/Pinta-ScriptEffects</Url>
     </Header>
     <Dependencies>
         <!-- Currently building against v3.1.0 -->
